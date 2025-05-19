@@ -1,17 +1,18 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
+using WebApi.Entities;
+using WebApi.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services
+    .AddMongo()
+    .AddMongoRepository<Item>("items");
 
 builder.Services.AddControllers(options =>
 {
     options.SuppressAsyncSuffixInActionNames = false;
 });
 
-BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapidotnet dev-certs https --trust
 builder.Services.AddOpenApi();
 

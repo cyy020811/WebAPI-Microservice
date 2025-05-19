@@ -10,7 +10,12 @@ namespace WebApi.Controllers
     [Route("items")]
     public class ItemController : ControllerBase
     {
-        private readonly ItemsRepository _itemsRepository = new ();
+        private readonly IRepository<Item> _itemsRepository;
+
+        public ItemController(IRepository<Item> itemsRepository)
+        {
+            _itemsRepository = itemsRepository;
+        }
 
         [HttpGet]
         public async Task<IEnumerable<ItemDto>> GetAsync()
