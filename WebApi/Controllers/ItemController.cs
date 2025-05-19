@@ -26,7 +26,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ItemDto>> GetByIDAsync(string id)
+        public async Task<ActionResult<ItemDto>> GetByIdAsync(string id)
         {
             var item = await _itemsRepository.GetAsync(id);
 
@@ -49,7 +49,7 @@ namespace WebApi.Controllers
 
             await _itemsRepository.CreateAsync(item);
 
-            return CreatedAtAction(nameof(GetByIDAsync), new { id = item.Id }, item);
+            return CreatedAtAction(nameof(GetByIdAsync), new { id = item.Id }, item);
         }
 
         [HttpPut("{id}")]
