@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Reflection.Metadata;
 using MongoDB.Driver;
 using WebApi.Entities;
@@ -21,9 +22,19 @@ namespace WebApi.Repositories
             return await _collection.Find(_filterBuilder.Empty).ToListAsync();
         }
 
+        public async Task<IReadOnlyCollection<T>> GetAllAsync(Expression<Func<T, bool>> filter)
+        {
+            return await _collection.Find(filter).ToListAsync();
+        }
+
         public async Task<T> GetAsync(string id)
         {
             FilterDefinition<T> filter = _filterBuilder.Eq(entity => entity.Id, id);
+            return await _collection.Find(filter).FirstOrDefaultAsync();
+        }
+
+        public async Task<T> GetAsync(Expression<Func<T, bool>> filter)
+        {
             return await _collection.Find(filter).FirstOrDefaultAsync();
         }
 
