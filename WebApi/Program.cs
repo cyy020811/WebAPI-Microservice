@@ -1,12 +1,22 @@
+using Amazon.S3;
+using Amazon.S3.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using WebApi.Entities;
 using WebApi.Repositories;
+using WebApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// MongoDB Service
 builder.Services
     .AddMongo()
     .AddMongoRepository<Item>("items");
+
+// AWS S3 Bucket Service
+builder.Services
+    .AddS3Settings()
+    .AddS3Repository();
 
 builder.Services.AddControllers(options =>
 {

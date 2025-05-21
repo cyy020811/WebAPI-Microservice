@@ -1,3 +1,7 @@
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -38,6 +42,35 @@ namespace WebApi.Repositories
 
                 return new MongoRepository<T>(database, collectionName);
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddS3Settings(this IServiceCollection services)
+        {
+            var configuration = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: false)
+                    .Build();
+
+            services.Configure<S3Settings>(configuration.GetSection(nameof(S3Settings)));
+
+            return services;
+        }
+
+        public static IServiceCollection AddS3Repository(this IServiceCollection services)
+        {
+            services.AddSingleton<IAmazonS3>(serviceProvider =>
+            {
+                var s3Settings = serviceProvider.GetRequiredService<IOptions<S3Settings>>().Value;
+                var s3Config = new AmazonS3Config
+                {
+                    RegionEndpoint = RegionEndpoint.GetBySystemName(s3Settings.Region),
+                };
+
+                return new AmazonS3Client(s3Config);
+            });
+
+            services.AddSingleton<S3Repository>();
 
             return services;
         }
