@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using WebApi.Repositories;
@@ -18,13 +19,33 @@ namespace WebApi.Controllers
             _s3Repository = s3Repository;
         }
 
-        [IgnoreAntiforgeryToken]
         [HttpGet("{key}")]
         public async Task<IActionResult> GetAsync(string key)
         {
-            GetObjectResponse response = await _s3Repository.DownloadAsync(key);
+            try
+            {
+                GetObjectResponse response = await _s3Repository.DownloadAsync(key);
 
-            return File(response.ResponseStream, response.Headers.ContentType, response.Metadata["file-name"]);
+                return File(response.ResponseStream, response.Headers.ContentType, response.Metadata["file-name"]);
+            }
+            catch (AmazonS3Exception ex)
+            {
+                return BadRequest($"File {key} is not found");
+            }
+        }
+
+        [HttpGet("presigned/{key}")]
+        public async Task<IActionResult> GetPreSignedURLAsync(string key)
+        {
+            try
+            {
+                var preSignedURL = await _s3Repository.GetDownloadPreSignedURL(key);
+                return Ok(new { key, url = preSignedURL });
+            }
+            catch (AmazonS3Exception ex)
+            {
+                return BadRequest($"S3 error generating pre-signed URL: {ex.Message}");
+            }
         }
 
         [IgnoreAntiforgeryToken]
@@ -41,13 +62,32 @@ namespace WebApi.Controllers
             return Ok(key);
         }
 
-        [IgnoreAntiforgeryToken]
+        [HttpPost("presigned")]
+        public async Task<IActionResult> PostPreSignedURLAsync(string fileName, string contentType)
+        {
+            try
+            {
+                var preSignedURL = await _s3Repository.GetUploadPreSignedURL(fileName, contentType);
+                return Ok(preSignedURL);
+            }
+            catch (AmazonS3Exception ex)
+            {
+                return BadRequest($"S3 error generating pre-signed URL: {ex.Message}");
+            }
+        }
+
         [HttpDelete("{key}")]
         public async Task<ActionResult> DeleteAsync(string key)
         {
-            await _s3Repository.RemoveAsync(key);
+            try{
+                await _s3Repository.RemoveAsync(key);
 
-            return Ok($"File {key} deleted successfully");
+                return Ok($"File {key} deleted successfully");
+            }
+            catch (AmazonS3Exception ex)
+            {
+                return BadRequest($"S3 error generating pre-signed URL: {ex.Message}");
+            }
         }
     }
 }

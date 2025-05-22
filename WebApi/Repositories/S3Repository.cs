@@ -32,6 +32,21 @@ namespace WebApi.Repositories
             return response;
         }
 
+        public async Task<string> GetDownloadPreSignedURL(string key)
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _s3Settings.Value.BucketName,
+                Key = $"files/{key}",
+                Verb = HttpVerb.GET,
+                Expires = DateTime.UtcNow.AddMinutes(30)
+            };
+
+            string preSignedURL = _s3Client.GetPreSignedURL(request);
+
+            return preSignedURL;
+        }
+
         public async Task<Guid> UploadAsync(IFormFile file)
         {
             using var stream = file.OpenReadStream();
@@ -53,6 +68,28 @@ namespace WebApi.Repositories
             await _s3Client.PutObjectAsync(putRequest);
 
             return key;
+        }
+
+        internal async Task<string> GetUploadPreSignedURL(string fileName, string contentType)
+        {
+            var key = new Guid();
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _s3Settings.Value.BucketName,
+                Key = $"files/{key}",
+                Verb = HttpVerb.PUT,
+                Expires = DateTime.UtcNow.AddMinutes(30),
+                ContentType = contentType,
+                Metadata =
+                {
+                    ["file-name"] = fileName
+                }
+
+            };
+
+            string preSignedURL = _s3Client.GetPreSignedURL(request);
+
+            return preSignedURL;
         }
 
         public async Task RemoveAsync(string key)
